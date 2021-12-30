@@ -2,7 +2,7 @@ import {Tracker} from 'meteor/tracker';
 import {createComputed, createSignal, onCleanup} from 'solid-js';
 import type {Accessor} from 'solid-js';
 
-// Types from react-meteor-data
+// Type from react-meteor-data
 export interface IReactiveFn<T> {
   (c?: Tracker.Computation): T
 }
