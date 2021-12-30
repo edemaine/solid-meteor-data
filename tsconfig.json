@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    /* Basic Options */
+    "target": "es2018",
+    "module": "esNext",
+    "lib": ["esnext", "dom"],
+    "allowJs": true,
+    "checkJs": false,
+    "incremental": true,
+    "noEmit": true,
+
+    /* Strict Type-Checking Options */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+
+    /* Additional Checks */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false,
+
+    /* Module Resolution Options */
+    "baseUrl": ".",
+    "paths": {},
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "types": ["node"],
+    /*"types": ["node", "mocha"],*/
+    "esModuleInterop": true,
+    "preserveSymlinks": true,
+
+    /* SolidJS options */
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js"
+  },
+  "exclude": [
+    "./.meteor/**"
+  ]
+}

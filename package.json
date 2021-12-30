@@ -1,0 +1,26 @@
+{
+  "name": "meteor-solidjs-data",
+  "description": "Helpers for combining Meteor and SolidJS reactivity",
+  "scripts": {
+    "tsc": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edemaine/meteor-solidjs-data.git"
+  },
+  "author": {
+    "name": "Erik Demaine",
+    "email": "edemaine@mit.edu",
+    "url": "http://erikdemaine.org/"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/edemaine/meteor-solidjs-data/issues"
+  },
+  "homepage": "https://github.com/edemaine/meteor-solidjs-data#readme",
+  "devDependencies": {
+    "@types/meteor": "^1.4.86",
+    "solid-js": "^1.2.6",
+    "typescript": "^4.5.4"
+  }
+}
