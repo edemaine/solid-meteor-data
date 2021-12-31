@@ -61,12 +61,18 @@ The Tracker is automatically stopped when the component/root is destroyed.
 You can use `createTracker` to depend on all sorts of Meteor reactive variables:
 
 ```js
-const meteorUser = createTracker(Meteor.user);
+const meteorUser = createTracker(() => Meteor.user());
 const sessionName = createTracker(() => Session.get('name'));
 <Show when={meteorUser} fallback={<h1>Please log in.</h1>}>
   <h1>Welcome {meteorUser.profile.name || meteorUser._id} AKA {sessionName}!</h1>
 </Show>
 ```
+
+**Limitation**:
+Function `reactiveFn` can also depend on SolidJS signals, with dependencies
+set during the initial run and during each run caused by a SolidJS signal.
+However, if a Meteor dependency causes the function to rerun, the SolidJS
+dependencies won't update.
 
 ### `createSubscribe(name, ...args)`
 
