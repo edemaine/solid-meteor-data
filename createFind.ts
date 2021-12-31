@@ -29,7 +29,7 @@ const createFindClient = <T = any>(factory: () => (Mongo.Cursor<T> | undefined |
       setOutput([]);
     } else {
       // Set initial value to full fetch (an optimization over observe startup)
-      setOutput(Tracker.nonreactive(() => cursor.fetch()));
+      setOutput(Tracker.nonreactive(() => cursor!.fetch()));
       // Observe further changes to cursor via live query
       observer = cursor.observe({
         addedAt(document, atIndex) {
