@@ -47,6 +47,9 @@ from within your SolidJS components/roots:
 These helpers are modeled after `useTracker`, `useSubscribe`, and `useFind` from
 [`react-meteor-data`](https://github.com/meteor/react-packages/tree/master/packages/react-meteor-data).
 
+A [demo repository](https://github.com/edemaine/meteor-solidjs-demo)
+illustrates the use of this library in a Meteor project.
+
 ### `createTracker(reactiveFn)`
 
 Calling `createTracker(reactiveFn)` will immediately set up a
