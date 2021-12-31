@@ -3,6 +3,7 @@
   "description": "Helpers for combining SolidJS and Meteor reactivity",
   "version": "0.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "prepare": "tsc"
   },
