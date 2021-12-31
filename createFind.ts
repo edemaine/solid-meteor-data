@@ -75,12 +75,13 @@ const createFindClient = <T = any>(factory: () => (Mongo.Cursor<T> | undefined |
   return output;
 };
 
-const createFindServer = <T = any>(factory: () => (Mongo.Cursor<T> | undefined | null)) => {
+// On the server, just fetch without reactivity
+const createFindServer = <T = any>(factory: () => (Mongo.Cursor<T> | undefined | null)): Accessor<T[]> => {
   const cursor = Tracker.nonreactive(factory);
   if (Meteor.isDevelopment) checkCursor(cursor);
   return (cursor instanceof Mongo.Cursor)
-    ? Tracker.nonreactive(cursor.fetch)
-    : null;
+    ? () => Tracker.nonreactive(() => cursor!.fetch())
+    : () => [];
 };
 
 export const createFind = Meteor.isServer
