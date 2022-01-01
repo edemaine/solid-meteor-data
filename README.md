@@ -68,11 +68,12 @@ const sessionName = createTracker(() => Session.get('name'));
 </Show>
 ```
 
-**Limitation**:
-Function `reactiveFn` can also depend on SolidJS signals, with dependencies
-set during the initial run and during each run caused by a SolidJS signal.
-However, if a Meteor dependency causes the function to rerun, the SolidJS
-dependencies won't update.
+If you change any SolidJS state (e.g., set any signals) within `reactiveFn`,
+then you should wrap those operations in `Tracker.nonreactive(() => ...)`
+(as you should in any Tracker function).  Otherwise, the change in SolidJS
+state could immediately trigger other SolidJS functions to rerun, which will
+cause any Tracker operations to have this Tracker as a parent, and potentially
+get stopped when this Tracker reruns.
 
 ### `createSubscribe(name, ...args)`
 
