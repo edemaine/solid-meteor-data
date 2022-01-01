@@ -15,6 +15,6 @@ export const createTracker = <T = any>(reactiveFn: IReactiveFn<T>): Accessor<T> 
     computation = Tracker.autorun((c) =>
       setOutput(() => reactiveFn(c)))
   });
-  onCleanup(computation!.stop);
+  onCleanup(() => computation!.stop());
   return output as Accessor<T>; // initial undefined should be overwritten now
-}
+};
