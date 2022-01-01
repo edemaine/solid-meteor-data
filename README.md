@@ -38,6 +38,8 @@ from within your SolidJS components/roots:
 2. `createSubscribe` activates a
    [Meteor subscription](https://docs.meteor.com/api/pubsub.html#Meteor-subscribe)
    for the duration of the component.
+   By wrapping some of the arguments in functions,
+   they will react to both SolidJS and Meteor dependencies.
 3. `createFind` obtains an array of documents from a Mongo `find` operation,
    suitable for use in a
    [SolidJS `<For>` component](https://www.solidjs.com/docs/latest/api#%3Cfor%3E).
@@ -92,18 +94,54 @@ get stopped when this Tracker reruns.
 Calling `createSubscribe(name, ...args)` subscribes to the publication with
 given `name` and arguments, just like
 [`Meteor.subscribe(name, ...args)`](https://docs.meteor.com/api/pubsub.html#Meteor-subscribe).
-The difference is that `createSubscribe` automatically cancels the
-subscription when the component/root is destroyed.
+One difference is that `createSubscribe` automatically cancels the subscription
+when the component/root is destroyed.  A simple example:
 
-`createSubscription` also returns a boolean `loading` signal.
+```js
+createSubscribe('docs');
+```
+
+All arguments to `createSubscribe` (including `name`) can be functions
+that return the actual argument passed in.  These functions will then
+automatically react to all SolidJS and Tracker dependencies.  For example:
+
+```js
+createSubscribe('posts', () => props.group);
+```
+
+If we had written `createSubscribe('posts', props.group)`, the subscription
+wouldn't change when `props.group` changes.
+
+Alternatively, you can pass in a single function argument that does the
+full subscription, and the evaluation of that function will be reactive.
+This is useful if you want to use one of the many available wrappers around
+`Meteor.subscribe` instead.  For example:
+
+```js
+createSubscribe(() => Meteor.subscribe('posts', props.group));
+```
+
+Note that, ignoring the return value, this code is equivalent to the following
+code (both semantically and in terms of implementation):
+
+```js
+createTracker(() => Meteor.subscribe('posts', props.group));
+```
+
+Finally, `createSubscription` returns a boolean `loading` signal.
 Initially `loading()` will be `true`, and it will become `false` once the
 subscription has reported a "ready" signal.
+The example above is in fact equivalent to the following code:
+
+```js
+createTracker(() => !Meteor.subscribe('posts', props.group).ready());
+```
 
 You can use the `loading` signal to render a loading spinner
 while waiting for the subscription to be ready, like so:
 
 ```js
-const loading = createSubscribe('posts', props.group);
+const loading = createSubscribe('posts', () => props.group);
 const posts = createFind(() => Posts.find({group: props.group}));
 return <Show when={!loading()} fallback={<Loading/>}>
   <ul>
@@ -113,11 +151,6 @@ return <Show when={!loading()} fallback={<Loading/>}>
   </ul>
 </Show>;
 ```
-
-CRITICAL NOTE: The arguments to `createSubscribe` cannot currently react to
-SolidJS signals.  In the example above, if `props.group` changes from its
-initial value, the subscription won't change.
-[[Issue #2](https://github.com/edemaine/solidjs-meteor-data/issues/2)]
 
 ### `createFind(reactiveFn)`
 
