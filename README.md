@@ -50,6 +50,18 @@ These helpers are modeled after `useTracker`, `useSubscribe`, and `useFind` from
 A [demo repository](https://github.com/edemaine/meteor-solidjs-demo)
 illustrates the use of this library in a Meteor project.
 
+You can import any subset of the helpers like so:
+
+```js
+import {createTracker, createSubscribe, createFind} from 'solidjs-meteor-data';
+```
+
+Or you can import them individually like so:
+
+```js
+import {createTracker} from 'solidjs-meteor-data/createTracker';
+```
+
 ### `createTracker(reactiveFn)`
 
 Calling `createTracker(reactiveFn)` will immediately set up a
