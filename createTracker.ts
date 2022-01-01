@@ -14,7 +14,9 @@ export const createTracker = <T = any>(reactiveFn: IReactiveFn<T>): Accessor<T> 
   createComputed(() => {
     resettable(); // depend on reset signal
     if (computation) computation.stop();
-    computation = Tracker.autorun((c) => {
+    // Wrap this Tracker creation in nonreactive so it doesn't accidentally
+    // get a parent Tracker (e.g. if SolidJS signal gets set within tracker).
+    computation = Tracker.nonreactive(() => Tracker.autorun((c) => {
       // Only run the function in first Tracker run, because only that is run
       // in the correct Listener context of createComputed.  Future runs are
       // executed within a setImmediate context, so just reset in that case.
@@ -28,7 +30,7 @@ export const createTracker = <T = any>(reactiveFn: IReactiveFn<T>): Accessor<T> 
       } else {
         Tracker.nonreactive(reset);
       }
-    });
+    }));
   });
   onCleanup(() => computation!.stop());
   return output as Accessor<T>; // initial undefined should be overwritten now

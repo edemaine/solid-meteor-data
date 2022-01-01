@@ -124,8 +124,10 @@ according to changes.
 Function `reactiveFn` can depend on SolidJS signals;
 upon any changes, it builds a brand new cursor and result array.
 [[Issue #1](https://github.com/edemaine/solidjs-meteor-data/issues/1)]
-However, `reactiveFn` does not react to Meteor dependencies; use
-`useTracker` to transform such values as SolidJS signals and then use those.
+However, `reactiveFn` *does not react to Meteor dependencies*; use
+`useTracker` to transform such values into SolidJS signals and then use those.
+(This design limitation matches `react-meteor-data`,
+though is subject to change.)
 
 Here's are two examples of `createFind`
 (including one from the larger example above):
