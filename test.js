@@ -1,5 +1,5 @@
 import {createEffect, createRoot, createSignal} from 'solid-js';
-import {ReactiveVar} from '@edemaine/meteor-tracker';
+import {ReactiveVar} from 'meteor/reactive-var';
 
 import {createTracker} from './createTracker';
 //import {createFind, createSubscribe, createTracker} from '.';

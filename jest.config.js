@@ -5,5 +5,6 @@ export default {
   extensionsToTreatAsEsm: ['.jsx'],
   moduleNameMapper: {
     '^meteor/tracker$': '@edemaine/meteor-tracker',
+    '^meteor/reactive-var$': '@edemaine/meteor-tracker',
   },
 };
