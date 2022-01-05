@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/edemaine/solidjs-meteor-data#readme",
   "devDependencies": {
-    "@edemaine/meteor-tracker": "^1.0.0",
+    "@edemaine/meteor-tracker": "^1.1.0",
     "@types/meteor": "^1.4.86",
     "jest": "^27.4.7",
     "solid-jest": "^0.2.0",
