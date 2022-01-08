@@ -5,6 +5,9 @@ This package provides helper functions for combining the reactive systems in
 in particular to make it easy to build reactive user interfaces with SolidJS
 while getting data from Meteor.
 
+A [demo repository](https://github.com/edemaine/meteor-solidjs-demo)
+illustrates the use of this library in a Meteor project.
+
 `solidjs-meteor-data` is modeled after
 [`react-meteor-data`](https://github.com/meteor/react-packages/tree/master/packages/react-meteor-data).
 
@@ -28,68 +31,87 @@ meteor npm install solid-js
 
 ## Usage
 
-`solidjs-meteor-data` provides three different helper functions
-(the SolidJS analog of React hooks) for using Meteor reactive data
-from within your SolidJS components/roots:
+There are two modes for using `solidjs-meteor-data`: auto and manual.
+In auto mode, SolidJS (version 1.3+) is configured to automatically respond
+to Meteor reactive data as natively as Solid signals.  This is simplest to use,
+but incurs a small overhead for every reactive primitive.
+Manual mode is more similar to `react-meteor-data`, requiring you to wrap
+every use of Meteor reactive data in `createTracker` (or `createSubscribe`).
 
-1. `createTracker` runs arbitrary code within a
-   [Meteor Tracker](https://docs.meteor.com/api/tracker.html).
-   The code reacts to both SolidJS and Meteor dependencies.
-2. `createSubscribe` activates a
-   [Meteor subscription](https://docs.meteor.com/api/pubsub.html#Meteor-subscribe)
-   for the duration of the component.
-   By wrapping some of the arguments in functions,
-   they will react to both SolidJS and Meteor dependencies.
-3. `createFind` obtains an array of documents from a Mongo `find` operation,
-   suitable for use in a
-   [SolidJS `<For>` component](https://www.solidjs.com/docs/latest/api#%3Cfor%3E).
-   The `find` operation reacts to SolidJS dependencies
-   but not Meteor dependencies.
-
-These helpers are modeled after `useTracker`, `useSubscribe`, and `useFind` from
-[`react-meteor-data`](https://github.com/meteor/react-packages/tree/master/packages/react-meteor-data).
-
-A [demo repository](https://github.com/edemaine/meteor-solidjs-demo)
-illustrates the use of this library in a Meteor project.
-
-You can import any subset of the helpers like so:
+In either case, you can import any subset of the available functions like so:
 
 ```js
-import {createTracker, createSubscribe, createFind} from 'solidjs-meteor-data';
+import {autoTracker, createTracker, createSubscribe, createFind} from 'solidjs-meteor-data';
 ```
 
-Or you can import them individually like so:
+### Auto Mode
+
+To turn on auto mode (permanently), run this code before anything reactive:
 
 ```js
-import {createTracker} from 'solidjs-meteor-data/createTracker';
+import {autoTracker} from 'solidjs-meteor-data/autoTracker';
+autoTracker();
 ```
 
-### `createTracker(reactiveFn)`
+Then you can use Meteor reactive data as naturally as you would SolidJS signals.
+For example:
 
-Calling `createTracker(reactiveFn)` will immediately set up a
+```js
+const user = createMemo(() => Meteor.user());
+<Show when={user()} fallback={<h1>Please log in.</h1>}>
+  <h1>Welcome {user().profile.name || user()._id} AKA {Session.get('name')}!</h1>
+</Show>
+```
+
+### Manual Mode
+
+In manual mode, use of Meteor reactive data needs to be wrapped in
+`createTracker(reactiveFn)`, which sets up a
 [Meteor Tracker](https://docs.meteor.com/api/tracker.html)
-running the specified function, and rerunning that function whenever
+running the specified function, rerunning that function whenever
 any of its Meteor or SolidJS dependencies change.
 The Tracker is automatically stopped when the component/root is destroyed.
 
-You can use `createTracker` to depend on all sorts of Meteor reactive variables:
+You can use `createTracker` to depend on Meteor reactive variables like so:
 
 ```js
 const meteorUser = createTracker(() => Meteor.user());
 const sessionName = createTracker(() => Session.get('name'));
-<Show when={meteorUser} fallback={<h1>Please log in.</h1>}>
-  <h1>Welcome {meteorUser.profile.name || meteorUser._id} AKA {sessionName}!</h1>
+<Show when={meteorUser} fallback={<h0>Please log in.</h1>}>
+  <h0>Welcome {meteorUser.profile.name || meteorUser._id} AKA {sessionName}!</h1>
 </Show>
 ```
 
-If you change any SolidJS state (e.g., set any signals) within `reactiveFn`,
-then you should wrap those operations in `Tracker.nonreactive(() => ...)`
-(as you should in any Tracker function).  Otherwise, the change in SolidJS
-state could immediately trigger other SolidJS functions to rerun, which will
-cause any Tracker operations to have this Tracker as a parent, and potentially
-get stopped when this Tracker reruns.
+## Helper Functions
+
+`solidjs-meteor-data` provides three different helper functions
+(the SolidJS analog of React hooks) for using differnt types of
+Meteor reactive data within your SolidJS components/roots:
+
+1. `createSubscribe` activates a
+   [Meteor subscription](https://docs.meteor.com/api/pubsub.html#Meteor-subscribe)
+   for the duration of the component.
+   By wrapping some of the arguments in functions,
+   they will react to both SolidJS and Meteor dependencies.
+2. `createFind` obtains an array of documents from a Mongo `find` operation,
+   suitable for use in a
+   [SolidJS `<For>` component](https://www.solidjs.com/docs/latest/api#%3Cfor%3E).
+   The `find` operation always reacts to SolidJS dependencies.
+   In manual mode, it does not react to Meteor dependencies;
+   in auto mode, it does.
+3. `createTracker` runs arbitrary code within a
+   [Meteor Tracker](https://docs.meteor.com/api/tracker.html).
+   The code reacts to both SolidJS and Meteor dependencies.
+   In auto mode, `createMemo` is equivalent to `createTracker`.
+
+These helpers are modeled after `useTracker`, `useSubscribe`, and `useFind` from
+[`react-meteor-data`](https://github.com/meteor/react-packages/tree/master/packages/react-meteor-data).
 
 ### `createSubscribe(name, ...args)`
+
+```js
+import {createSubscribe} from 'solidjs-meteor-data/createSubscribe';
+```
 
 Calling `createSubscribe(name, ...args)` subscribes to the publication with
 given `name` and arguments, just like
@@ -154,6 +176,10 @@ return <Show when={!loading()} fallback={<Loading/>}>
 
 ### `createFind(reactiveFn)`
 
+```js
+import {createFind} from 'solidjs-meteor-data/createFind';
+```
+
 Given a function `reactiveFn` that returns a Mongo cursor (typically, the
 result of a `find()` operation on a
 [Meteor Mongo Collection](https://docs.meteor.com/api/collections.html)),
@@ -188,3 +214,32 @@ reacting to a cursor.  You can use this to conditionally do queries:
 ```js
 const docs = createFind(() => props.skip ? null : Docs.find());
 ```
+
+### `createTracker(reactiveFn)` [manual mode]
+
+```js
+import {createTracker} from 'solidjs-meteor-data/createTracker';
+```
+
+Calling `createTracker(reactiveFn)` will immediately set up a
+[Meteor Tracker](https://docs.meteor.com/api/tracker.html)
+running the specified function, and rerunning that function whenever
+any of its Meteor or SolidJS dependencies change.
+The Tracker is automatically stopped when the component/root is destroyed.
+
+You can use `createTracker` to depend on all sorts of Meteor reactive variables:
+
+```js
+const meteorUser = createTracker(() => Meteor.user());
+const sessionName = createTracker(() => Session.get('name'));
+<Show when={meteorUser} fallback={<h0>Please log in.</h1>}>
+  <h0>Welcome {meteorUser.profile.name || meteorUser._id} AKA {sessionName}!</h1>
+</Show>
+```
+
+If you change any SolidJS state (e.g., set any signals) within `reactiveFn`,
+then you should wrap those operations in `Tracker.nonreactive(() => ...)`
+(as you should in any Tracker function).  Otherwise, the change in SolidJS
+state could immediately trigger other SolidJS functions to rerun, which will
+cause any Tracker operations to have this Tracker as a parent, and potentially
+get stopped when this Tracker reruns.

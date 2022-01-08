@@ -1,5 +1,5 @@
 import {Tracker} from 'meteor/tracker';
-import {createComputed, createSignal, onCleanup} from 'solid-js';
+import {createComputed, createMemo, createSignal, onCleanup} from 'solid-js';
 import type {Accessor} from 'solid-js';
 
 // Type from react-meteor-data
@@ -7,7 +7,13 @@ export interface IReactiveFn<T> {
   (c?: Tracker.Computation): T
 }
 
+export const mode = {
+  auto: false,  // is autoTracker running?
+};
+
 export const createTracker = <T = any>(reactiveFn: IReactiveFn<T>): Accessor<T> => {
+  if (mode.auto)
+    return createMemo(() => reactiveFn());
   const [output, setOutput] = createSignal<T>();
   const [resettable, reset] = createSignal(undefined, {equals: false});
   let computation: Tracker.Computation;

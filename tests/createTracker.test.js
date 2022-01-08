@@ -1,8 +1,8 @@
 import {createEffect, createRoot, createSignal} from 'solid-js';
 import {ReactiveVar} from 'meteor/reactive-var';
 
-import {createTracker} from './createTracker';
-//import {createFind, createSubscribe, createTracker} from '.';
+import {createTracker} from '../createTracker';
+//import {createFind, createSubscribe, createTracker} from '..';
 
 const tick = () => new Promise((done) => setTimeout(done, 0));
 
@@ -63,6 +63,10 @@ describe('createTracker', () => {
     });
     expect(tracker()).toEqual(1);
     expect(changes).toEqual(1);
+    rv.set(2);
+    await tick();
+    expect(tracker()).toEqual(2);
+    expect(changes).toEqual(2);
     rv.set(2);
     await tick();
     expect(tracker()).toEqual(2);

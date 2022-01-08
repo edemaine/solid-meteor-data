@@ -1,14 +1,15 @@
 {
   "name": "solidjs-meteor-data",
   "description": "Helpers for combining SolidJS and Meteor reactivity",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "prepare": "tsc",
     "test:tsc": "tsc --noEmit",
     "test:jest": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "test": "npm run prepare && npm run test:jest"
+    "test:jestauto": "node --experimental-vm-modules node_modules/jest/bin/jest.js -c jest.auto.config.js",
+    "test": "npm run prepare && npm run test:jest && npm run test:jestauto"
   },
   "repository": {
     "type": "git",
