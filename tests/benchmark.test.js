@@ -4,30 +4,26 @@ import {autoTracker} from '../autoTracker.js';
 
 const stateChanges = 1000;
 
+const solidBench = () => {
+  createRoot((dispose) => {
+    const [state, setState] = createSignal();
+    const memo = createMemo(() => state());
+    for (let i = 0; i < stateChanges; i++) {
+      setState(i);
+      memo();
+    }
+    dispose();
+  });
+};
+
 test('benchmark', () => {
   new Benchmark.Suite()
   .add('manual mode', () => {
-    createRoot((dispose) => {
-      const [state, setState] = createSignal(1);
-      const memo = createMemo(() => state());
-      for (let i = 0; i < stateChanges; i++) {
-        setState(i);
-        memo();
-      }
-      dispose();
-    });
+    solidBench();
   })
   .add('auto mode', () => {
     autoTracker();
-    createRoot((dispose) => {
-      const [state, setState] = createSignal(1);
-      const memo = createMemo(() => state());
-      for (let i = 0; i < stateChanges; i++) {
-        setState(i);
-        memo();
-      }
-      dispose();
-    });
+    solidBench();
   })
   .on('cycle', (e) => console.log(e.target.toString()))
   .on('complete', function() {
