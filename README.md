@@ -34,7 +34,7 @@ meteor npm install solid-js
 There are two modes for using `solidjs-meteor-data`: auto and manual.
 In auto mode, SolidJS (version 1.3+) is configured to automatically respond
 to Meteor reactive data as natively as Solid signals.  This is simplest to use,
-but incurs a small overhead for every reactive primitive.
+but incurs overhead (roughly 5x) for every reactive primitive/update.
 Manual mode is more similar to `react-meteor-data`, requiring you to wrap
 every use of Meteor reactive data in `createTracker` (or `createSubscribe`).
 

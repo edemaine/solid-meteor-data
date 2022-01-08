@@ -1,6 +1,7 @@
 export default {
   preset: 'solid-jest/preset/browser',
-  testPathIgnorePatterns: ['/node_modules', '/auto'], // skip auto by default
+  // skip auto and benchmark tests by default
+  testPathIgnorePatterns: ['/node_modules', '/auto', '/bench'],
   moduleFileExtensions: ['js', 'jsx'], // use built js, not ts
   extensionsToTreatAsEsm: ['.jsx'],
   moduleNameMapper: {

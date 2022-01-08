@@ -8,8 +8,9 @@
     "prepare": "tsc",
     "test:tsc": "tsc --noEmit",
     "test:jest": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "test:jestauto": "node --experimental-vm-modules node_modules/jest/bin/jest.js -c jest.auto.config.js",
-    "test": "npm run prepare && npm run test:jest && npm run test:jestauto"
+    "test:jest:auto": "node --experimental-vm-modules node_modules/jest/bin/jest.js -c jest.auto.config.js",
+    "test:jest:bench": "node --experimental-vm-modules node_modules/jest/bin/jest.js -c jest.bench.config.js",
+    "test": "npm run prepare && npm run test:jest && npm run test:jest:auto && npm run test:jest:bench"
   },
   "repository": {
     "type": "git",
@@ -28,7 +29,9 @@
   "devDependencies": {
     "@edemaine/meteor-tracker": "^1.1.0",
     "@types/meteor": "^1.4.86",
+    "benchmark": "^2.1.4",
     "jest": "^27.4.7",
+    "microtime": "^3.0.0",
     "solid-jest": "^0.2.0",
     "solid-js": "^1.2.6",
     "typescript": "^4.5.4"
