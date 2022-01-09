@@ -28,12 +28,12 @@
   "homepage": "https://github.com/edemaine/solidjs-meteor-data#readme",
   "devDependencies": {
     "@edemaine/meteor-tracker": "^1.1.0",
-    "@types/meteor": "^1.4.86",
+    "@types/meteor": "^2.0.1",
     "benchmark": "^2.1.4",
     "jest": "^27.4.7",
     "microtime": "^3.0.0",
     "solid-jest": "^0.2.0",
-    "solid-js": "^1.2.6",
+    "solid-js": "^1.3.0",
     "typescript": "^4.5.4"
   },
   "peerDependencies": {
