@@ -6,7 +6,7 @@ import type {Accessor} from 'solid-js';
 
 // Helper from react-meteor-data
 const checkCursor = <T>(cursor: Mongo.Cursor<T> | undefined | null) => {
-  if (cursor !== null && cursor !== undefined && !(cursor instanceof Mongo.Cursor)) {
+  if (cursor != null && !(cursor instanceof Mongo.Cursor)) {
     console.warn(
       'Warning: createFind requires an instance of Mongo.Cursor (or null). '
       + 'Make sure you do NOT call .fetch() on your cursor.'
