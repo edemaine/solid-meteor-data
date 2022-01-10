@@ -15,10 +15,34 @@ const checkCursor = <T>(cursor: Mongo.Cursor<T> | undefined | null) => {
 };
 
 const createFindClient = <T = any>(factory: () => (Mongo.Cursor<T> | undefined | null)): Accessor<T[]> => {
-  const [output, setOutput] = createSignal<T[]>([]);
+  // cursor stores the current return value of factory()
   let cursor: Mongo.Cursor<T> | null | undefined;
+  // observer stores the current observe() live query, if any
   let observer: Meteor.LiveQueryHandle | undefined;
+  // results is an Array modified in-place to track current cursor results.
+  // We maintain the invariant that output() === results, but allow briefly
+  // modifying results before triggering the output signal via setOutput.
+  let results: T[] = [];
+  const [output, setOutput] = createSignal<T[]>(results, {equals: false});
+  // queue maintains a list of operations to do at the next tick.
+  let queue: (() => void)[];
+  // schedule() adds a new task to that queue, and if needed,
+  // automatically schedules flushing the queue at next tick.
+  let scheduled = false;
+  const schedule = (op: () => void) => {
+    queue.push(op);
+    if (!scheduled) {
+      scheduled = true;
+      queueMicrotask(() => {
+        scheduled = false;
+        queue.forEach((op) => op());
+        queue = [];
+        setOutput(results);
+      });
+    }
+  };
   createComputed(() => {
+    queue = [];  // cancel any queued operations
     if (observer) {
       observer.stop();
       observer = undefined;
@@ -26,42 +50,28 @@ const createFindClient = <T = any>(factory: () => (Mongo.Cursor<T> | undefined |
     cursor = Tracker.nonreactive(factory);
     if (Meteor.isDevelopment) checkCursor(cursor);
     if (!cursor) {
-      setOutput([]);
+      setOutput(results = []);
     } else {
       // Set initial value to full fetch (an optimization over observe startup)
-      setOutput(Tracker.nonreactive(() => cursor!.fetch()));
+      setOutput(results = Tracker.nonreactive(() => cursor!.fetch()));
       // Observe further changes to cursor via live query
       observer = cursor.observe({
         addedAt(document, atIndex) {
-          setOutput((data) => [
-            ...data.slice(0, atIndex),
-            document,
-            ...data.slice(atIndex),
-          ]);
+          schedule(() => results.splice(atIndex, 0, document));
         },
         // @ts-ignore: Unused variable oldDocument
         changedAt(newDocument, oldDocument, atIndex) {
-          setOutput((data) => [
-            ...data.slice(0, atIndex),
-            newDocument,
-            ...data.slice(atIndex + 1),
-          ]);
+          schedule(() => results[atIndex] = newDocument);
         },
         // @ts-ignore: Unused variable oldDocument
         removedAt(oldDocument, atIndex) {
-          setOutput((data) => [
-            ...data.slice(0, atIndex),
-            ...data.slice(atIndex + 1),
-          ]);
+          schedule(() => results.splice(atIndex, 1));
         },
+        // @ts-ignore: Unused variable document
         movedTo(document, fromIndex, toIndex) {
-          setOutput((data) => {
-            const copy = [
-              ...data.slice(0, fromIndex),
-              ...data.slice(fromIndex + 1),
-            ];
-            copy.splice(toIndex, 0, document);
-            return copy;
+          schedule(() => {
+            results.splice(fromIndex, 1);
+            results.splice(toIndex, 0, document);
           });
         },
         // @ts-ignore: private API
