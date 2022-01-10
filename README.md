@@ -1,14 +1,14 @@
-# solidjs-meteor-data
+# solid-meteor-data
 
 This package provides helper functions for combining the reactive systems in
 [SolidJS](https://www.solidjs.com) and [Meteor](https://www.meteor.com),
 in particular to make it easy to build reactive user interfaces with SolidJS
 while getting data from Meteor.
 
-A [demo repository](https://github.com/edemaine/meteor-solidjs-demo)
+A [demo repository](https://github.com/edemaine/solid-meteor-demo)
 illustrates the use of this library in a Meteor project.
 
-`solidjs-meteor-data` is modeled after
+`solid-meteor-data` is modeled after
 [`react-meteor-data`](https://github.com/meteor/react-packages/tree/master/packages/react-meteor-data).
 
 ## Install
@@ -20,7 +20,7 @@ find the types), it can only be run within a Meteor project (as it depends on
 To install the package, use NPM:
 
 ```sh
-meteor npm install solidjs-meteor-data
+meteor npm install solid-meteor-data
 ```
 
 You'll also need to install `solid-js` if you haven't already:
@@ -31,7 +31,7 @@ meteor npm install solid-js
 
 ## Usage
 
-There are two modes for using `solidjs-meteor-data`: auto and manual.
+There are two modes for using `solid-meteor-data`: auto and manual.
 In auto mode, SolidJS (version 1.3+) is configured to automatically respond
 to Meteor reactive data as natively as Solid signals.  This is simplest to use,
 but incurs overhead (roughly 5x) for every reactive primitive/update.
@@ -41,7 +41,7 @@ every use of Meteor reactive data in `createTracker` (or `createSubscribe`).
 In either case, you can import any subset of the available functions like so:
 
 ```js
-import {autoTracker, createTracker, createSubscribe, createFind} from 'solidjs-meteor-data';
+import {autoTracker, createTracker, createSubscribe, createFind} from 'solid-meteor-data';
 ```
 
 ### Auto Mode
@@ -49,7 +49,7 @@ import {autoTracker, createTracker, createSubscribe, createFind} from 'solidjs-m
 To turn on auto mode (permanently), run this code before anything reactive:
 
 ```js
-import {autoTracker} from 'solidjs-meteor-data/autoTracker';
+import {autoTracker} from 'solid-meteor-data/autoTracker';
 autoTracker();
 ```
 
@@ -84,7 +84,7 @@ const sessionName = createTracker(() => Session.get('name'));
 
 ## Helper Functions
 
-`solidjs-meteor-data` provides three different helper functions
+`solid-meteor-data` provides three different helper functions
 (the SolidJS analog of React hooks) for using differnt types of
 Meteor reactive data within your SolidJS components/roots:
 
@@ -110,7 +110,7 @@ These helpers are modeled after `useTracker`, `useSubscribe`, and `useFind` from
 ### `createSubscribe(name, ...args)`
 
 ```js
-import {createSubscribe} from 'solidjs-meteor-data/createSubscribe';
+import {createSubscribe} from 'solid-meteor-data/createSubscribe';
 ```
 
 Calling `createSubscribe(name, ...args)` subscribes to the publication with
@@ -177,7 +177,7 @@ return <Show when={!loading()} fallback={<Loading/>}>
 ### `createFind(reactiveFn)`
 
 ```js
-import {createFind} from 'solidjs-meteor-data/createFind';
+import {createFind} from 'solid-meteor-data/createFind';
 ```
 
 Given a function `reactiveFn` that returns a Mongo cursor (typically, the
@@ -194,7 +194,7 @@ according to changes.
 
 Function `reactiveFn` can depend on SolidJS signals;
 upon any changes, it builds a brand new cursor and result array.
-[[Issue #1](https://github.com/edemaine/solidjs-meteor-data/issues/1)]
+[[Issue #1](https://github.com/edemaine/solid-meteor-data/issues/1)]
 However, `reactiveFn` *does not react to Meteor dependencies*; use
 `useTracker` to transform such values into SolidJS signals and then use those.
 (This design limitation matches `react-meteor-data`,
@@ -218,7 +218,7 @@ const docs = createFind(() => props.skip ? null : Docs.find());
 ### `createTracker(reactiveFn)` [manual mode]
 
 ```js
-import {createTracker} from 'solidjs-meteor-data/createTracker';
+import {createTracker} from 'solid-meteor-data/createTracker';
 ```
 
 Calling `createTracker(reactiveFn)` will immediately set up a
