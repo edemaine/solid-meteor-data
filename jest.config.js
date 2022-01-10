@@ -5,7 +5,7 @@ export default {
   moduleFileExtensions: ['js', 'jsx'], // use built js, not ts
   extensionsToTreatAsEsm: ['.jsx'],
   moduleNameMapper: {
-    '^meteor/tracker$': '@edemaine/meteor-tracker',
-    '^meteor/reactive-var$': '@edemaine/meteor-tracker',
+    '^meteor/tracker$': '@blastjs/tracker',
+    '^meteor/reactive-var$': '@blastjs/reactive-var',
   },
 };

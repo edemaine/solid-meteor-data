@@ -27,7 +27,8 @@
   },
   "homepage": "https://github.com/edemaine/solid-meteor-data#readme",
   "devDependencies": {
-    "@edemaine/meteor-tracker": "1.1.0",
+    "@blastjs/tracker": "1.0.5",
+    "@blastjs/reactive-var": "1.0.3",
     "@types/meteor": "2.0.1",
     "benchmark": "2.1.4",
     "jest": "27.4.7",
