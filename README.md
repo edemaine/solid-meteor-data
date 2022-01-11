@@ -184,29 +184,54 @@ Given a function `reactiveFn` that returns a Mongo cursor (typically, the
 result of a `find()` operation on a
 [Meteor Mongo Collection](https://docs.meteor.com/api/collections.html)),
 `createFind(reactiveFn)` returns a signal whose value is an array of matching
-Mongo documents.
+Mongo documents.  By default, each Mongo document is represented as a read-only
+[Solid Store](https://www.solidjs.com/docs/latest/api#stores), making it easy
+to depend on specific parts of the document and only updating when those
+specific parts change.  For example:
 
-Calling `createFind(reactiveFn)` is roughly equivalent to
+```js
+const docs = createFind(() => Docs.find());
+return (
+  <For each={docs()}>{doc =>
+    <h1>{doc.title}</h1>    <!--updates only when title changes-->
+    <p>{doc.body}</p>       <!--updates only when body changes-->
+  }</For>
+);
+```
+
+If a document from the Mongo query gets modified (but its `_id` remains the
+same), the existing component will get re-used, and just the changed parts
+(`title` and/or `body`) will rerender.  If the query results just change
+in order, the existing components will all get re-used and re-ordered.
+Like component props in Solid, you shouldn't destructure documents
+if you want to preserve reactivity.
+
+If you don't want the overhead of Solid Stores, you can call
+`createFind(reactiveFn, {noStore: true})`.  Then the signal value is an array
+of documents as raw objects.  If only a few objects change, the others will
+remain identical objects, so any existing components will get re-used
+(thanks to `<For>`).  But if an object changes (e.g. in `title`), then the
+component will get discarded and replaced by a new one, preventing
+fine-grained reactivity within a component.
+
+Calling `createFind(reactiveFn, {noStore: true})` is roughly equivalent to
 `createTracker(() => reactiveFn().fetch())`, but more efficient:
 the latter returns a new set of documents whenever the cursor results change,
-while `createFind` only adds, removes, or re-orders documents in the array
-according to changes.
+while `createFind` only adds, removes, changes, or re-orders documents
+in the array according to changes reported by Mongo/Meteor (e.g., from diffs
+sent by the server to the client).  Multiple simultaneous changes are batched
+together into one update to the array, so a `<For>` component will rerender
+only once per batch.
 
 Function `reactiveFn` can depend on SolidJS signals;
 upon any changes, it builds a brand new cursor and result array.
 [[Issue #1](https://github.com/edemaine/solid-meteor-data/issues/1)]
-However, `reactiveFn` *does not react to Meteor dependencies*; use
-`useTracker` to transform such values into SolidJS signals and then use those.
+However, unless in auto mode, `reactiveFn` *does not react to Meteor
+dependencies*; use `createTracker` to transform such values into
+SolidJS signals and then use those.
 (This design limitation matches `react-meteor-data`,
 though is subject to change.)
-
-Here's are two examples of `createFind`
-(including one from the larger example above):
-
-```js
-const docs = createFind(() => Docs.find());
-const posts = createFind(() => Posts.find({group: props.group}));
-```
+In auto mode, `reactiveFn` can use both SolidJS and Meteor dependencies.
 
 If `reactiveFn` returns `null` or `undefined`, `createFind` will skip
 reacting to a cursor.  You can use this to conditionally do queries:
@@ -233,7 +258,7 @@ You can use `createTracker` to depend on all sorts of Meteor reactive variables:
 const meteorUser = createTracker(() => Meteor.user());
 const sessionName = createTracker(() => Session.get('name'));
 <Show when={meteorUser} fallback={<h0>Please log in.</h1>}>
-  <h0>Welcome {meteorUser.profile.name || meteorUser._id} AKA {sessionName}!</h1>
+  <h1>Welcome {meteorUser.profile.name || meteorUser._id} AKA {sessionName}!</h1>
 </Show>
 ```
 

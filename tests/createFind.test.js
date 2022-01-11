@@ -5,27 +5,39 @@ import {jest} from '@jest/globals';
 
 const docs = () => [
   {_id: 101, name: 'Me', friends: ['Myself', 'I']},
-  {_id: 102, name: 'Myself', friends: ['I']},
+  {_id: 102, name: 'Myself', friends: ['Me']},
   {_id: 103, name: 'I', friends: ['Me']},
 ];
 
 const tick = () => new Promise((done) => setTimeout(done, 0));
 
 describe('createFind', () => {
-  test('returns fetch results, identically', () => {
+  test('noStore returns fetch results, identically', () => {
     createRoot(dispose => {
       const instance = docs();
       const results = createFind(() => {
         const cursor = new Mongo.Cursor;
         cursor.fetch = jest.fn().mockReturnValue(instance);
         return cursor;
-      });
+      }, {noStore: true});
       expect(results()).toBe(instance);
       dispose();
     });
   });
 
-  test('unchanged documents are identical', async () => {
+  test('returns fetch results as stores', () => {
+    createRoot(dispose => {
+      const results = createFind(() => {
+        const cursor = new Mongo.Cursor;
+        cursor.fetch = jest.fn().mockReturnValue(docs());
+        return cursor;
+      });
+      expect(results()).toStrictEqual(docs());
+      dispose();
+    });
+  });
+
+  test('noStore unchanged documents are identical', async () => {
     const instance = docs();
     const {dispose, cursor, results} = createRoot(dispose => {
       let cursor;
@@ -33,7 +45,7 @@ describe('createFind', () => {
         cursor = new Mongo.Cursor;
         cursor.fetch = jest.fn().mockReturnValue(instance.slice(0, 2));
         return cursor;
-      });
+      }, {noStore: true});
       return {dispose, cursor, results};
     });
     cursor.callbacks.addedAt(instance[2], 2);
@@ -47,6 +59,49 @@ describe('createFind', () => {
     expect(results()[0]).toBe(instance[2]);
     expect(results()[1]).toBe(instance[1]);
     expect(results()[2]).toBe(instance[2]);
+    dispose();
+  });
+
+  test('document stores remain identical', async () => {
+    const {dispose, cursor, results, name, friends} = createRoot(dispose => {
+      let cursor;
+      const results = createFind(() => {
+        cursor = new Mongo.Cursor;
+        cursor.fetch = jest.fn().mockReturnValue(docs().slice(0, 2));
+        return cursor;
+      });
+      const middle = results()[1];
+      const name = jest.fn(() => middle.name);
+      const friends = jest.fn(() => middle.friends);
+      createMemo(name);
+      createMemo(friends);
+      return {dispose, cursor, results, name, friends};
+    });
+    await tick();
+    expect(name).toHaveBeenCalledTimes(1);
+    expect(friends).toHaveBeenCalledTimes(1);
+    cursor.callbacks.addedAt(docs()[2], 2);
+    await tick();
+    expect(results()).toStrictEqual(docs());
+    const stores = results();
+    cursor.callbacks.changedAt(docs()[2], docs()[0], 0);
+    await tick();
+    expect(results()).toStrictEqual([docs()[2], docs()[1], docs()[2]]);
+    expect(results()[0]).toBe(stores[0]);
+    expect(results()[1]).toBe(stores[1]);
+    expect(results()[2]).toBe(stores[2]);
+    cursor.callbacks.changedAt(docs()[0], docs()[2], 2);
+    await tick();
+    expect(results()).toStrictEqual(docs().reverse());
+    expect(results()[0]).toBe(stores[0]);
+    expect(results()[1]).toBe(stores[1]);
+    expect(results()[2]).toBe(stores[2]);
+    // Changing middle element should update name but not friends
+    expect(name).toHaveBeenCalledTimes(1);
+    expect(friends).toHaveBeenCalledTimes(1);
+    cursor.callbacks.changedAt(docs()[2], docs()[1], 1);
+    expect(name).toHaveBeenCalledTimes(2);
+    expect(friends).toHaveBeenCalledTimes(1);
     dispose();
   });
 

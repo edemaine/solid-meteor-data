@@ -3,6 +3,8 @@ import {Mongo} from 'meteor/mongo';
 import {Tracker} from 'meteor/tracker';
 import {createComputed, createSignal, onCleanup} from 'solid-js';
 import type {Accessor} from 'solid-js';
+import {createStore, reconcile} from 'solid-js/store';
+import type {Store, SetStoreFunction} from 'solid-js/store';
 
 // Helper from react-meteor-data
 const checkCursor = <T>(cursor: Mongo.Cursor<T> | undefined | null) => {
@@ -15,17 +17,28 @@ const checkCursor = <T>(cursor: Mongo.Cursor<T> | undefined | null) => {
 };
 
 export type FindFactory<T> = () => (Mongo.Cursor<T> | undefined | null);
+export type CreateFindOptions = {
+  noStore: boolean;
+};
 
-const createFindClient = <T>(factory: FindFactory<T>): Accessor<T[]> => {
+const $SET = Symbol('store-set');
+const storify = <T>(document: Store<T>): Store<T> => {
+  const [get, set] = createStore(document);
+  Object.defineProperty(get, $SET, {value: set});
+  return get;
+};
+
+const createFindClient = <T>(factory: FindFactory<T>, options?: CreateFindOptions): Accessor<Store<T>[]> => {
+  const useStore = !(options && options.noStore);
   // cursor stores the current return value of factory()
   let cursor: Mongo.Cursor<T> | null | undefined;
   // observer stores the current observe() live query, if any
   let observer: Meteor.LiveQueryHandle | undefined;
-  // results is an Array modified in-place to track current cursor results.
-  // We maintain the invariant that output() === results, but allow briefly
-  // modifying results before triggering the output signal via setOutput.
-  let results: T[] = [];
-  const [output, setOutput] = createSignal<T[]>(results, {equals: false});
+  // documents is an Array modified in-place to track current cursor results.
+  // We maintain the invariant that output() === documents, but allow briefly
+  // modifying documents before triggering the output signal via setOutput.
+  let documents: Store<T>[] = [];
+  const [output, setOutput] = createSignal<Store<T>[]>(documents, {equals: false});
   // queue maintains a list of operations to do at the next tick.
   let queue: (() => void)[];
   // schedule() adds a new task to that queue, and if needed,
@@ -39,7 +52,7 @@ const createFindClient = <T>(factory: FindFactory<T>): Accessor<T[]> => {
         scheduled = false;
         queue.forEach((op) => op());
         queue = [];
-        setOutput(results);
+        setOutput(documents);
       });
     }
   };
@@ -52,30 +65,38 @@ const createFindClient = <T>(factory: FindFactory<T>): Accessor<T[]> => {
     cursor = Tracker.nonreactive(factory);
     if (Meteor.isDevelopment) checkCursor(cursor);
     if (!cursor) {
-      if (results.length) {
-        setOutput(results = []);
+      if (documents.length) {
+        setOutput(documents = []);
       }
     } else {
       // Set initial value to full fetch (an optimization over observe startup)
-      setOutput(results = Tracker.nonreactive(() => cursor!.fetch()));
+      documents = Tracker.nonreactive(() => cursor!.fetch());
+      if (useStore)
+        documents = (documents as Store<T>[]).map(storify);
+      setOutput(documents);
       // Observe further changes to cursor via live query
       observer = cursor.observe({
-        addedAt(document, atIndex) {
-          schedule(() => results.splice(atIndex, 0, document));
+        addedAt(document: Store<T>, atIndex) {
+          if (useStore) document = storify<T>(document);
+          schedule(() => documents.splice(atIndex, 0, document));
         },
         // @ts-ignore: Unused variable oldDocument
         changedAt(newDocument, oldDocument, atIndex) {
-          schedule(() => results[atIndex] = newDocument);
+          if (useStore)
+            ((documents[atIndex] as any)[$SET] as SetStoreFunction<T>)(
+              reconcile(newDocument));
+          else
+            schedule(() => documents[atIndex] = newDocument);
         },
         // @ts-ignore: Unused variable oldDocument
         removedAt(oldDocument, atIndex) {
-          schedule(() => results.splice(atIndex, 1));
+          schedule(() => documents.splice(atIndex, 1));
         },
         // @ts-ignore: Unused variable document
         movedTo(document, fromIndex, toIndex) {
           schedule(() => {
-            results.splice(fromIndex, 1);
-            results.splice(toIndex, 0, document);
+            const [oldDoc] = documents.splice(fromIndex, 1);
+            documents.splice(toIndex, 0, oldDoc);
           });
         },
         // @ts-ignore: private API
@@ -90,7 +111,7 @@ const createFindClient = <T>(factory: FindFactory<T>): Accessor<T[]> => {
 };
 
 // On the server, just fetch without reactivity
-const createFindServer = <T = any>(factory: FindFactory<T>): Accessor<T[]> => {
+const createFindServer = <T = any>(factory: FindFactory<T>): Accessor<Store<T>[]> => {
   const cursor = Tracker.nonreactive(factory);
   if (Meteor.isDevelopment) checkCursor(cursor);
   return (cursor instanceof Mongo.Cursor)
