@@ -38,7 +38,7 @@ describe('createFind', () => {
     });
     cursor.callbacks.addedAt(instance[2], 2);
     await tick();
-    expect(results()).toEqual(instance);
+    expect(results()).toStrictEqual(instance);
     expect(results()[0]).toBe(instance[0]);
     expect(results()[1]).toBe(instance[1]);
     expect(results()[2]).toBe(instance[2]);
@@ -60,19 +60,19 @@ describe('createFind', () => {
       return {dispose, cursor, memo, memoUpdate};
     });
     expect(memoUpdate).toHaveBeenCalledTimes(1);
-    expect(memo()).toEqual([]);
+    expect(memo()).toStrictEqual([]);
     cursor.callbacks.addedAt(docs()[0], 0);
     await tick();
     expect(memoUpdate).toHaveBeenCalledTimes(2);
-    expect(memo()).toEqual(docs().slice(0, 1));
+    expect(memo()).toStrictEqual(docs().slice(0, 1));
     cursor.callbacks.addedAt(docs()[1], 1);
     await tick();
     expect(memoUpdate).toHaveBeenCalledTimes(3);
-    expect(memo()).toEqual(docs().slice(0, 2));
+    expect(memo()).toStrictEqual(docs().slice(0, 2));
     cursor.callbacks.addedAt(docs()[2], 2);
     await tick();
     expect(memoUpdate).toHaveBeenCalledTimes(4);
-    expect(memo()).toEqual(docs().slice(0, 3));
+    expect(memo()).toStrictEqual(docs().slice(0, 3));
     dispose();
   });
 
@@ -86,19 +86,19 @@ describe('createFind', () => {
       return {dispose, cursor, memo, memoUpdate};
     });
     expect(memoUpdate).toHaveBeenCalledTimes(1);
-    expect(memo()).toEqual([]);
+    expect(memo()).toStrictEqual([]);
     cursor.callbacks.addedAt(docs()[0], 0);
     await tick();
     expect(memoUpdate).toHaveBeenCalledTimes(2);
-    expect(memo()).toEqual(docs().slice(0, 1).reverse());
+    expect(memo()).toStrictEqual(docs().slice(0, 1).reverse());
     cursor.callbacks.addedAt(docs()[1], 0);
     await tick();
     expect(memoUpdate).toHaveBeenCalledTimes(3);
-    expect(memo()).toEqual(docs().slice(0, 2).reverse());
+    expect(memo()).toStrictEqual(docs().slice(0, 2).reverse());
     cursor.callbacks.addedAt(docs()[2], 0);
     await tick();
     expect(memoUpdate).toHaveBeenCalledTimes(4);
-    expect(memo()).toEqual(docs().slice(0, 3).reverse());
+    expect(memo()).toStrictEqual(docs().slice(0, 3).reverse());
     dispose();
   });
 
@@ -112,35 +112,35 @@ describe('createFind', () => {
       return {dispose, cursor, memo, memoUpdate};
     });
     expect(memoUpdate).toHaveBeenCalledTimes(1);
-    expect(memo()).toEqual([]);
+    expect(memo()).toStrictEqual([]);
     // Insert in weird order
     cursor.callbacks.addedAt(docs()[0], 0);
     cursor.callbacks.addedAt(docs()[1], 1);
     cursor.callbacks.addedAt(docs()[2], 1);
     await tick();
     expect(memoUpdate).toHaveBeenCalledTimes(2);
-    expect(memo()).toEqual([docs()[0], docs()[2], docs()[1]]);
+    expect(memo()).toStrictEqual([docs()[0], docs()[2], docs()[1]]);
     // Batch remove + add to simulate move
     cursor.callbacks.removedAt(docs()[2], 1);
     cursor.callbacks.addedAt(docs()[2], 2);
     await tick();
     expect(memoUpdate).toHaveBeenCalledTimes(3);
-    expect(memo()).toEqual([docs()[0], docs()[1], docs()[2]]);
+    expect(memo()).toStrictEqual([docs()[0], docs()[1], docs()[2]]);
     // Move tests
     cursor.callbacks.movedTo(docs()[2], 2, 0);
     await tick();
     expect(memoUpdate).toHaveBeenCalledTimes(4);
-    expect(memo()).toEqual([docs()[2], docs()[0], docs()[1]]);
+    expect(memo()).toStrictEqual([docs()[2], docs()[0], docs()[1]]);
     cursor.callbacks.movedTo(docs()[2], 0, 2);
     await tick();
     expect(memoUpdate).toHaveBeenCalledTimes(5);
-    expect(memo()).toEqual([docs()[0], docs()[1], docs()[2]]);
+    expect(memo()).toStrictEqual([docs()[0], docs()[1], docs()[2]]);
     // Test batching of update followed by its inverse
     cursor.callbacks.movedTo(docs()[2], 2, 0);
     cursor.callbacks.movedTo(docs()[2], 0, 2);
     await tick();
     expect(memoUpdate).toHaveBeenCalledTimes(6);
-    expect(memo()).toEqual([docs()[0], docs()[1], docs()[2]]);
+    expect(memo()).toStrictEqual([docs()[0], docs()[1], docs()[2]]);
     dispose();
   });
 
@@ -154,13 +154,13 @@ describe('createFind', () => {
       return {dispose, cursor, memo, memoUpdate};
     });
     expect(memoUpdate).toHaveBeenCalledTimes(1);
-    expect(memo()).toEqual([]);
+    expect(memo()).toStrictEqual([]);
     cursor.callbacks.addedAt(docs()[0], 0);
     cursor.callbacks.addedAt(docs()[1], 1);
     cursor.callbacks.addedAt(docs()[2], 2);
     await tick();
     expect(memoUpdate).toHaveBeenCalledTimes(2);
-    expect(memo()).toEqual(docs());
+    expect(memo()).toStrictEqual(docs());
     dispose();
   });
 
@@ -174,18 +174,18 @@ describe('createFind', () => {
       return {dispose, cursor, setCursor, memo, memoUpdate};
     });
     expect(memoUpdate).toHaveBeenCalledTimes(1);
-    expect(memo()).toEqual([]);
+    expect(memo()).toStrictEqual([]);
     cursor().callbacks.addedAt(docs()[0], 0);
     cursor().callbacks.addedAt(docs()[1], 1);
     setCursor(new Mongo.Cursor);
     // Changing cursor triggers immediate fetch and update
     expect(memoUpdate).toHaveBeenCalledTimes(2);
-    expect(memo()).toEqual([]);
+    expect(memo()).toStrictEqual([]);
     cursor().callbacks.addedAt(docs()[2], 0);
     // Want tick to trigger last add but not first two
     await tick();
     expect(memoUpdate).toHaveBeenCalledTimes(3);
-    expect(memo()).toEqual(docs().slice(2, 3));
+    expect(memo()).toStrictEqual(docs().slice(2, 3));
     dispose();
   });
 });
