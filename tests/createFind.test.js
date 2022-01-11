@@ -12,6 +12,12 @@ const docs = () => [
 
 const tick = () => new Promise((done) => setTimeout(done, 0));
 
+const makeCursor = (init) => {
+  const cursor = new Mongo.Cursor;
+  cursor.fetch = jest.fn().mockReturnValue(init);
+  return cursor;
+};
+
 describe('createFind', () => {
   test('noStore returns fetch results, identically', () => {
     createRoot(dispose => {
@@ -28,11 +34,7 @@ describe('createFind', () => {
 
   test('returns fetch results as stores', () => {
     createRoot(dispose => {
-      const results = createFind(() => {
-        const cursor = new Mongo.Cursor;
-        cursor.fetch = jest.fn().mockReturnValue(docs());
-        return cursor;
-      });
+      const results = createFind(() => makeCursor(docs()));
       expect(results()).toStrictEqual(docs());
       dispose();
     });
@@ -41,12 +43,8 @@ describe('createFind', () => {
   test('noStore unchanged documents are identical', async () => {
     const instance = docs();
     const {dispose, cursor, results} = createRoot(dispose => {
-      let cursor;
-      const results = createFind(() => {
-        cursor = new Mongo.Cursor;
-        cursor.fetch = jest.fn().mockReturnValue(instance.slice(0, 2));
-        return cursor;
-      }, {noStore: true});
+      const cursor = makeCursor(instance.slice(0, 2));
+      const results = createFind(() => cursor, {noStore: true});
       return {dispose, cursor, results};
     });
     cursor.callbacks.addedAt(instance[2], 2);
@@ -65,12 +63,8 @@ describe('createFind', () => {
 
   test('document stores remain identical', async () => {
     const {dispose, cursor, results, name, friends} = createRoot(dispose => {
-      let cursor;
-      const results = createFind(() => {
-        cursor = new Mongo.Cursor;
-        cursor.fetch = jest.fn().mockReturnValue(docs().slice(0, 2));
-        return cursor;
-      });
+      const cursor = makeCursor(docs().slice(0, 2));
+      const results = createFind(() => cursor);
       const middle = results()[1];
       const name = jest.fn(() => middle.name);
       const friends = jest.fn(() => middle.friends);
@@ -108,11 +102,11 @@ describe('createFind', () => {
 
   test('append correctly', async () => {
     const {dispose, cursor, memo, memoUpdate} = createRoot(dispose => {
-      let cursor;
-      const results = createFind(() => cursor = new Mongo.Cursor);
+      const cursor = new Mongo.Cursor;
+      const results = createFind(() => cursor);
       // Ensure reactive update triggered using memo dependency:
-      let memoUpdate;
-      const memo = createMemo(memoUpdate = jest.fn(() => results()));
+      const memoUpdate = jest.fn(() => results());
+      const memo = createMemo(memoUpdate);
       return {dispose, cursor, memo, memoUpdate};
     });
     expect(memoUpdate).toHaveBeenCalledTimes(1);
@@ -134,11 +128,11 @@ describe('createFind', () => {
 
   test('prepend correctly', async () => {
     const {dispose, cursor, memo, memoUpdate} = createRoot(dispose => {
-      let cursor;
-      const results = createFind(() => cursor = new Mongo.Cursor);
+      const cursor = new Mongo.Cursor;
+      const results = createFind(() => cursor);
       // Ensure reactive update triggered using memo dependency:
-      let memoUpdate;
-      const memo = createMemo(memoUpdate = jest.fn(() => results()));
+      const memoUpdate = jest.fn(() => results());
+      const memo = createMemo(memoUpdate);
       return {dispose, cursor, memo, memoUpdate};
     });
     expect(memoUpdate).toHaveBeenCalledTimes(1);
@@ -160,11 +154,11 @@ describe('createFind', () => {
 
   test('add/change/remove/move correctly', async () => {
     const {dispose, cursor, memo, memoUpdate} = createRoot(dispose => {
-      let cursor;
-      const results = createFind(() => cursor = new Mongo.Cursor);
+      const cursor = new Mongo.Cursor;
+      const results = createFind(() => cursor);
       // Ensure reactive update triggered using memo dependency:
-      let memoUpdate;
-      const memo = createMemo(memoUpdate = jest.fn(() => results()));
+      const memoUpdate = jest.fn(() => results());
+      const memo = createMemo(memoUpdate);
       return {dispose, cursor, memo, memoUpdate};
     });
     expect(memoUpdate).toHaveBeenCalledTimes(1);
@@ -202,11 +196,11 @@ describe('createFind', () => {
 
   test('batch appends', async () => {
     const {dispose, cursor, memo, memoUpdate} = createRoot(dispose => {
-      let cursor;
-      const results = createFind(() => cursor = new Mongo.Cursor);
+      const cursor = new Mongo.Cursor;
+      const results = createFind(() => cursor);
       // Ensure reactive update triggered using memo dependency:
-      let memoUpdate;
-      const memo = createMemo(memoUpdate = jest.fn(() => results()));
+      const memoUpdate = jest.fn(() => results());
+      const memo = createMemo(memoUpdate);
       return {dispose, cursor, memo, memoUpdate};
     });
     expect(memoUpdate).toHaveBeenCalledTimes(1);
@@ -222,11 +216,11 @@ describe('createFind', () => {
 
   test('abort batch when cursor changes', async () => {
     const {dispose, cursor, setCursor, memo, memoUpdate} = createRoot(dispose => {
-      let memoUpdate;
       const [cursor, setCursor] = createSignal(new Mongo.Cursor);
       const results = createFind(() => cursor());
       // Ensure reactive update triggered using memo dependency:
-      const memo = createMemo(memoUpdate = jest.fn(() => results()));
+      const memoUpdate = jest.fn(() => results());
+      const memo = createMemo(memoUpdate);
       return {dispose, cursor, setCursor, memo, memoUpdate};
     });
     expect(memoUpdate).toHaveBeenCalledTimes(1);
