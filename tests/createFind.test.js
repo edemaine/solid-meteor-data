@@ -1,7 +1,8 @@
 import {createMemo, createRoot, createSignal} from 'solid-js';
-import {Mongo} from 'meteor/mongo';
-import {createFind} from '../createFind';
 import {jest} from '@jest/globals';
+
+import {Mongo} from 'meteor/mongo';  // actually ./mockMongo
+import {createFind} from '../createFind';
 
 const docs = () => [
   {_id: 101, name: 'Me', friends: ['Myself', 'I']},
