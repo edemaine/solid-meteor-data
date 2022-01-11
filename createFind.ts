@@ -61,13 +61,13 @@ const createFindClient = <T extends object>(factory: FindFactory<T>, options?: C
     cursor = Tracker.nonreactive(factory);
     if (Meteor.isDevelopment) checkCursor(cursor);
     if (!cursor) {
-      if (documents.length) {
+      if (documents.length) {  // avoid trigger if already empty
         setOutput(documents = []);
       }
     } else {
       // Set initial value to full fetch (an optimization over observe startup)
       let newDocuments: Store<T>[] = Tracker.nonreactive(() => cursor!.fetch());
-      if (useStore) {
+      if (useStore && newDocuments.length) {
         if (documents.length && !(options && options.separate)) {
           // Use reconcile to update documents to match newDocuments.
           // It needs to be given the unwrapped versions of documents,
@@ -76,9 +76,10 @@ const createFindClient = <T extends object>(factory: FindFactory<T>, options?: C
           newDocuments = reconcile(newDocuments, {key: '_id'})(
             documents.map((doc) => unwrap(doc))) as any;
         }
-        newDocuments = (newDocuments as Store<T>[]).map(storify);
+        newDocuments = newDocuments.map(storify);
       }
-      setOutput(documents = newDocuments);
+      if (newDocuments.length || documents.length)  // avoid if already empty
+        setOutput(documents = newDocuments);
       // Observe further changes to cursor via live query
       observer = cursor.observe({
         addedAt(document: Store<T>, atIndex) {

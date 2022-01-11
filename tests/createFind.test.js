@@ -227,14 +227,15 @@ describe('createFind', () => {
     expect(memo()).toStrictEqual([]);
     cursor().callbacks.addedAt(docs()[0], 0);
     cursor().callbacks.addedAt(docs()[1], 1);
+    // Changing cursor triggers immediate fetch and update.
+    // Optimization prevents memo from even triggering.
     setCursor(new Mongo.Cursor);
-    // Changing cursor triggers immediate fetch and update
-    expect(memoUpdate).toHaveBeenCalledTimes(2);
+    expect(memoUpdate).toHaveBeenCalledTimes(1);
     expect(memo()).toStrictEqual([]);
     cursor().callbacks.addedAt(docs()[2], 0);
     // Want tick to trigger last add but not first two
     await tick();
-    expect(memoUpdate).toHaveBeenCalledTimes(3);
+    expect(memoUpdate).toHaveBeenCalledTimes(2);
     expect(memo()).toStrictEqual(docs().slice(2, 3));
     dispose();
   });
