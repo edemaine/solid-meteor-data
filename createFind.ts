@@ -3,8 +3,8 @@ import {Mongo} from 'meteor/mongo';
 import {Tracker} from 'meteor/tracker';
 import {createComputed, createSignal, onCleanup} from 'solid-js';
 import type {Accessor} from 'solid-js';
-import {createStore, reconcile} from 'solid-js/store';
-import type {Store, SetStoreFunction} from 'solid-js/store';
+import {createStore, reconcile, unwrap} from 'solid-js/store';
+import type {Store} from 'solid-js/store';
 
 // Helper from react-meteor-data
 const checkCursor = <T>(cursor: Mongo.Cursor<T> | undefined | null) => {
@@ -21,14 +21,9 @@ export type CreateFindOptions = {
   noStore: boolean;
 };
 
-const $SET = Symbol('store-set');
-const storify = <T>(document: Store<T>): Store<T> => {
-  const [get, set] = createStore(document);
-  Object.defineProperty(get, $SET, {value: set});
-  return get;
-};
+const storify = <T>(document: Store<T>): Store<T> => createStore(document)[0];
 
-const createFindClient = <T>(factory: FindFactory<T>, options?: CreateFindOptions): Accessor<Store<T>[]> => {
+const createFindClient = <T extends object>(factory: FindFactory<T>, options?: CreateFindOptions): Accessor<Store<T>[]> => {
   const useStore = !(options && options.noStore);
   // cursor stores the current return value of factory()
   let cursor: Mongo.Cursor<T> | null | undefined;
@@ -83,8 +78,9 @@ const createFindClient = <T>(factory: FindFactory<T>, options?: CreateFindOption
         // @ts-ignore: Unused variable oldDocument
         changedAt(newDocument, oldDocument, atIndex) {
           if (useStore)
-            ((documents[atIndex] as any)[$SET] as SetStoreFunction<T>)(
-              reconcile(newDocument));
+            // Only change changed fields in existing document.  Simulate
+            // setStore which unwraps old document and passes it to reconcile.
+            reconcile(newDocument)(unwrap(documents[atIndex]));
           else
             schedule(() => documents[atIndex] = newDocument);
         },
