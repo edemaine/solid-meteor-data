@@ -52,7 +52,9 @@ const createFindClient = <T>(factory: FindFactory<T>): Accessor<T[]> => {
     cursor = Tracker.nonreactive(factory);
     if (Meteor.isDevelopment) checkCursor(cursor);
     if (!cursor) {
-      setOutput(results = []);
+      if (results.length) {
+        setOutput(results = []);
+      }
     } else {
       // Set initial value to full fetch (an optimization over observe startup)
       setOutput(results = Tracker.nonreactive(() => cursor!.fetch()));
