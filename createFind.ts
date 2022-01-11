@@ -14,7 +14,9 @@ const checkCursor = <T>(cursor: Mongo.Cursor<T> | undefined | null) => {
   }
 };
 
-const createFindClient = <T = any>(factory: () => (Mongo.Cursor<T> | undefined | null)): Accessor<T[]> => {
+export type FindFactory<T> = () => (Mongo.Cursor<T> | undefined | null);
+
+const createFindClient = <T>(factory: FindFactory<T>): Accessor<T[]> => {
   // cursor stores the current return value of factory()
   let cursor: Mongo.Cursor<T> | null | undefined;
   // observer stores the current observe() live query, if any
@@ -86,7 +88,7 @@ const createFindClient = <T = any>(factory: () => (Mongo.Cursor<T> | undefined |
 };
 
 // On the server, just fetch without reactivity
-const createFindServer = <T = any>(factory: () => (Mongo.Cursor<T> | undefined | null)): Accessor<T[]> => {
+const createFindServer = <T = any>(factory: FindFactory<T>): Accessor<T[]> => {
   const cursor = Tracker.nonreactive(factory);
   if (Meteor.isDevelopment) checkCursor(cursor);
   return (cursor instanceof Mongo.Cursor)
