@@ -223,15 +223,20 @@ sent by the server to the client).  Multiple simultaneous changes are batched
 together into one update to the array, so a `<For>` component will rerender
 only once per batch.
 
-Function `reactiveFn` can depend on SolidJS signals;
-upon any changes, it builds a brand new cursor and result array.
-[[Issue #1](https://github.com/edemaine/solid-meteor-data/issues/1)]
+Function `reactiveFn` can depend on SolidJS signals.  The documents of an
+updated cursor will be matched up with the previous document set according to
+the `_id` key, to prevent rerendering of common results (e.g. when just
+re-ordering via a new `sort` order).  If you are conditionally doing finds
+in different collections, and would rather treat each changed cursor as a
+completely fresh search with no shared results, use
+`createFind(reactiveFn, {separate: true})`.
+
 However, unless in auto mode, `reactiveFn` *does not react to Meteor
-dependencies*; use `createTracker` to transform such values into
-SolidJS signals and then use those.
-(This design limitation matches `react-meteor-data`,
+dependencies*.  (This design limitation matches `react-meteor-data`,
 though is subject to change.)
-In auto mode, `reactiveFn` can use both SolidJS and Meteor dependencies.
+You can use `createTracker` to transform such values into SolidJS signals
+and then use those, or switch to auto mode, where
+`reactiveFn` can react to both SolidJS and Meteor dependencies.
 
 If `reactiveFn` returns `null` or `undefined`, `createFind` will skip
 reacting to a cursor.  You can use this to conditionally do queries:

@@ -238,4 +238,86 @@ describe('createFind', () => {
     expect(memo()).toStrictEqual(docs().slice(2, 3));
     dispose();
   });
+
+  test('cursor reacts to solid signals', () => {
+    const instance = docs();
+    createRoot(dispose => {
+      const [cursor, setCursor] = createSignal(new Mongo.Cursor);
+      const results = createFind(() => cursor());
+      // Ensure reactive update triggered using memo dependency:
+      const memoUpdate = jest.fn(() => results());
+      createMemo(memoUpdate);
+      expect(memoUpdate).toHaveBeenCalledTimes(1);
+      setCursor(makeCursor(instance));
+      expect(memoUpdate).toHaveBeenCalledTimes(2);
+      expect(results()).toStrictEqual(docs());
+      const first = results()[0], middle = results()[1], last = results()[2];
+      const firstNameUpdate = jest.fn(() => first.name);
+      const lastNameUpdate = jest.fn(() => last.name);
+      createMemo(firstNameUpdate);
+      createMemo(lastNameUpdate);
+      expect(firstNameUpdate).toHaveBeenCalledTimes(1);
+      expect(lastNameUpdate).toHaveBeenCalledTimes(1);
+      // Reverse should not change any documents, only move
+      setCursor(makeCursor(docs().reverse()));
+      expect(memoUpdate).toHaveBeenCalledTimes(3);
+      expect(results()).toStrictEqual(docs().reverse());
+      expect(results()[0]).toBe(last);
+      expect(results()[1]).toBe(middle);
+      expect(results()[2]).toBe(first);
+      expect(firstNameUpdate).toHaveBeenCalledTimes(1);
+      expect(lastNameUpdate).toHaveBeenCalledTimes(1);
+      // Modify what was first document
+      const newDocs = docs();
+      newDocs[0].name = 'MeMeMeMe';
+      setCursor(makeCursor(newDocs.reverse()));
+      expect(results()[0]).toBe(last);
+      expect(results()[1]).toBe(middle);
+      expect(results()[2]).toBe(first);
+      expect(firstNameUpdate).toHaveBeenCalledTimes(2);
+      expect(lastNameUpdate).toHaveBeenCalledTimes(1);
+      dispose();
+    });
+  });
+
+  test('separate: cursor reacts to solid signals', () => {
+    const instance = docs();
+    createRoot(dispose => {
+      const [cursor, setCursor] = createSignal(new Mongo.Cursor);
+      const results = createFind(() => cursor(), {separate: true});
+      // Ensure reactive update triggered using memo dependency:
+      const memoUpdate = jest.fn(() => results());
+      createMemo(memoUpdate);
+      expect(memoUpdate).toHaveBeenCalledTimes(1);
+      setCursor(makeCursor(instance));
+      expect(memoUpdate).toHaveBeenCalledTimes(2);
+      expect(results()).toStrictEqual(docs());
+      const first = results()[0], middle = results()[1], last = results()[2];
+      const firstNameUpdate = jest.fn(() => first.name);
+      const lastNameUpdate = jest.fn(() => last.name);
+      createMemo(firstNameUpdate);
+      createMemo(lastNameUpdate);
+      expect(firstNameUpdate).toHaveBeenCalledTimes(1);
+      expect(lastNameUpdate).toHaveBeenCalledTimes(1);
+      // Reverse should change everything.
+      setCursor(makeCursor(docs().reverse()));
+      expect(memoUpdate).toHaveBeenCalledTimes(3);
+      expect(results()).toStrictEqual(docs().reverse());
+      expect(results()[0]).not.toBe(last);
+      expect(results()[1]).not.toBe(middle);
+      expect(results()[2]).not.toBe(first);
+      expect(firstNameUpdate).toHaveBeenCalledTimes(1);
+      expect(lastNameUpdate).toHaveBeenCalledTimes(1);
+      // Modify what was first document
+      const newDocs = docs();
+      newDocs[0].name = 'MeMeMeMe';
+      setCursor(makeCursor(newDocs.reverse()));
+      expect(results()[0]).not.toBe(last);
+      expect(results()[1]).not.toBe(middle);
+      expect(results()[2]).not.toBe(first);
+      expect(firstNameUpdate).toHaveBeenCalledTimes(1);
+      expect(lastNameUpdate).toHaveBeenCalledTimes(1);
+      dispose();
+    });
+  });
 });

@@ -19,6 +19,7 @@ const checkCursor = <T>(cursor: Mongo.Cursor<T> | undefined | null) => {
 export type FindFactory<T> = () => (Mongo.Cursor<T> | undefined | null);
 export type CreateFindOptions = {
   noStore: boolean;
+  separate: boolean;
 };
 
 const storify = <T>(document: Store<T>): Store<T> => createStore(document)[0];
@@ -65,10 +66,19 @@ const createFindClient = <T extends object>(factory: FindFactory<T>, options?: C
       }
     } else {
       // Set initial value to full fetch (an optimization over observe startup)
-      documents = Tracker.nonreactive(() => cursor!.fetch());
-      if (useStore)
-        documents = (documents as Store<T>[]).map(storify);
-      setOutput(documents);
+      let newDocuments: Store<T>[] = Tracker.nonreactive(() => cursor!.fetch());
+      if (useStore) {
+        if (documents.length && !(options && options.separate)) {
+          // Use reconcile to update documents to match newDocuments.
+          // It needs to be given the unwrapped versions of documents,
+          // and it produces a new array with those unwrapped versions,
+          // which we then need to rewrap.
+          newDocuments = reconcile(newDocuments, {key: '_id'})(
+            documents.map((doc) => unwrap(doc))) as any;
+        }
+        newDocuments = (newDocuments as Store<T>[]).map(storify);
+      }
+      setOutput(documents = newDocuments);
       // Observe further changes to cursor via live query
       observer = cursor.observe({
         addedAt(document: Store<T>, atIndex) {
