@@ -6,9 +6,16 @@ import type {Accessor} from 'solid-js';
 import {createStore, reconcile, unwrap} from 'solid-js/store';
 import type {Store} from 'solid-js/store';
 
-// Helper from react-meteor-data
-const checkCursor = <T>(cursor: Mongo.Cursor<T> | undefined | null) => {
-  if (cursor != null && !(cursor instanceof Mongo.Cursor)) {
+// Helper based on react-meteor-data: check for null or valid cursor.
+// On client, we should have a Mongo.Cursor (defined in
+// https://github.com/meteor/meteor/blob/devel/packages/minimongo/cursor.js and
+// https://github.com/meteor/meteor/blob/devel/packages/mongo/collection.js).
+// On server, however, we instead get a private Cursor type from
+// https://github.com/meteor/meteor/blob/devel/packages/mongo/mongo_driver.js
+// which has fields _mongo and _cursorDescription.
+const checkCursor = <T>(cursor: Mongo.Cursor<T> | undefined | null | {_mongo: unknown, _cursorDescription: unknown}) => {
+  if (cursor != null && !(cursor instanceof Mongo.Cursor) &&
+      !(cursor._mongo && cursor._cursorDescription)) {
     console.warn(
       'Warning: createFind requires an instance of Mongo.Cursor (or null). '
       + 'Make sure you do NOT call .fetch() on your cursor.'
@@ -121,7 +128,7 @@ const createFindClient = <T extends object>(factory: FindFactory<T>, options?: C
 const createFindServer = <T = any>(factory: FindFactory<T>): Accessor<Store<T>[]> => {
   const cursor = Tracker.nonreactive(factory);
   if (Meteor.isDevelopment) checkCursor(cursor);
-  return (cursor instanceof Mongo.Cursor)
+  return cursor
     ? () => Tracker.nonreactive(() => cursor!.fetch())
     : () => [];
 };
