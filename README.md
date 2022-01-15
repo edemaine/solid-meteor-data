@@ -38,12 +38,14 @@ In auto mode, SolidJS (version 1.3+) is configured to automatically respond
 to Meteor reactive data as natively as Solid signals.  This is simplest to use,
 but incurs overhead (roughly 5x) for every reactive primitive/update.
 Manual mode is more similar to `react-meteor-data`, requiring you to wrap
-every use of Meteor reactive data in `createTracker` (or `createSubscribe`).
+every use of Meteor reactive data in `createTracker` (or `createSubscribe`
+or `createFindOne`).
 
 In either case, you can import any subset of the available functions like so:
 
 ```js
-import {autoTracker, createTracker, createSubscribe, createFind} from 'solid-meteor-data';
+import {autoTracker, createTracker, createSubscribe,
+        createFind, createFindOne} from 'solid-meteor-data';
 ```
 
 ### Auto Mode
@@ -77,17 +79,21 @@ The Tracker is automatically stopped when the component/root is destroyed.
 You can use `createTracker` to depend on Meteor reactive variables like so:
 
 ```js
-const meteorUser = createTracker(() => Meteor.user());
+const user = createTracker(() => Meteor.user());
+  // but see createFindOne for a potentially better way to use Meteor.user()
 const sessionName = createTracker(() => Session.get('name'));
-<Show when={meteorUser} fallback={<h0>Please log in.</h1>}>
-  <h0>Welcome {meteorUser.profile.name || meteorUser._id} AKA {sessionName}!</h1>
-</Show>
+return (
+  <Show when={user()} fallback={<h1>Please log in.</h1>}>
+    <h1>Welcome {user().profile.name || user()._id}
+        AKA {sessionName()}!</h1>
+  </Show>
+);
 ```
 
 ## Helper Functions
 
-`solid-meteor-data` provides three different helper functions
-(the SolidJS analog of React hooks) for using differnt types of
+`solid-meteor-data` provides four different helper functions
+(the SolidJS analog of React hooks) for using different types of
 Meteor reactive data within your SolidJS components/roots:
 
 1. `createSubscribe` activates a
@@ -98,10 +104,16 @@ Meteor reactive data within your SolidJS components/roots:
 2. `createFind` obtains an array of documents from a Mongo `find` operation,
    suitable for use in a
    [SolidJS `<For>` component](https://www.solidjs.com/docs/latest/api#%3Cfor%3E).
-   The `find` operation always reacts to SolidJS dependencies.
-   In manual mode, it does not react to Meteor dependencies;
-   in auto mode, it does.
-3. `createTracker` runs arbitrary code within a
+   The array is efficiently updated as the cursor results change,
+   with support for fine-grained reactivity to individual documents.
+   The `find` operation also always reacts to SolidJS dependencies.
+   In manual mode, it does not react to Meteor dependencies
+   except the cursor itself; in auto mode, it does.
+3. `createFindOne` simplifies fine-grained reactivity
+   for a single fetched document,
+   as returned from a Mongo `findOne` operation or from `Meteor.user()`.
+   The operation reacts to both SolidJS and Meteor dependencies.
+4. `createTracker` runs arbitrary code within a
    [Meteor Tracker](https://docs.meteor.com/api/tracker.html).
    The code reacts to both SolidJS and Meteor dependencies.
    In auto mode, `createMemo` is equivalent to `createTracker`.
@@ -167,13 +179,15 @@ while waiting for the subscription to be ready, like so:
 ```js
 const loading = createSubscribe('posts', () => props.group);
 const posts = createFind(() => Posts.find({group: props.group}));
-return <Show when={!loading()} fallback={<Loading/>}>
-  <ul>
-    <For each={posts()}>{(post) =>
-      <li>{post.title}</li>
-    }</For>
-  </ul>
-</Show>;
+return (
+  <Show when={!loading()} fallback={<Loading/>}>
+    <ul>
+      <For each={posts()}>{(post) =>
+        <li>{post.title}</li>
+      }</For>
+    </ul>
+  </Show>
+);
 ```
 
 ### `createFind(reactiveFn)`
@@ -247,6 +261,47 @@ reacting to a cursor.  You can use this to conditionally do queries:
 const docs = createFind(() => props.skip ? null : Docs.find());
 ```
 
+### `createFindOne(reactiveFn)`
+
+```js
+import {createFindOne} from 'solid-meteor-data/createFindOne';
+```
+
+Given a function `reactiveFn` that returns an object or `undefined`/`null`
+(typically, the result of a `findOne()` operation on a
+[Meteor Mongo Collection](https://docs.meteor.com/api/collections.html),
+or a related helper like
+[`Meteor.user()`](https://docs.meteor.com/api/accounts.html)),
+`createFindOne(reactiveFn)` returns a pair `[exists, document]`
+where
+
+1. `exists` is a Boolean signal indicating whether `reactiveFn` returned an
+   object (`exists() === true`) or `undefined`/`null` (`exists() === false`);
+2. `document` is the returned object in a
+   [Solid Store](https://www.solidjs.com/docs/latest/api#stores).
+   If `exists() === false`, then `document` is an empty store
+   (representing `{}`).
+
+Roughly speaking, `createFindOne(reactiveFn)` is similar to
+`createTracker(reactiveFn)`.  The key difference is that `createFindOne`
+maintains the result in a Solid Store, enabling re-use of components that
+have the entire document passed in as a prop and enabling fine-grained
+reactivity to specific parts of the document.  In addition `createFindOne`
+makes it easy to track whether a document was returned.
+
+Here's an example using `Meteor.user()` to detect whether the user is logged
+in, and to display the username.  If other properties of the user
+(e.g. `Meteor.user().profile`) change, nothing will rerender.
+
+```js
+const [loggedIn, user] = createFindOne(() => Meteor.user());
+return (
+  <Show if={loggedIn()} fallback={<h1>Please log in.</h1>}>
+    <h1>Welcome {user.username}!</h1>
+  </Show>
+);
+```
+
 ### `createTracker(reactiveFn)` [manual mode]
 
 ```js
@@ -262,11 +317,15 @@ The Tracker is automatically stopped when the component/root is destroyed.
 You can use `createTracker` to depend on all sorts of Meteor reactive variables:
 
 ```js
-const meteorUser = createTracker(() => Meteor.user());
+const user = createTracker(() => Meteor.user());
+  // but see createFindOne for a potentially better way to use Meteor.user()
 const sessionName = createTracker(() => Session.get('name'));
-<Show when={meteorUser} fallback={<h0>Please log in.</h1>}>
-  <h1>Welcome {meteorUser.profile.name || meteorUser._id} AKA {sessionName}!</h1>
-</Show>
+return (
+  <Show when={user()} fallback={<h1>Please log in.</h1>}>
+    <h1>Welcome {user().profile.name || user()._id}
+        AKA {sessionName()}!</h1>
+  </Show>
+);
 ```
 
 If you change any SolidJS state (e.g., set any signals) within `reactiveFn`,
