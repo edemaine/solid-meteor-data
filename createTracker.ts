@@ -11,7 +11,7 @@ export const mode = {
   auto: false,  // is autoTracker running?
 };
 
-export const createTracker = <T = any>(reactiveFn: IReactiveFn<T>): Accessor<T> => {
+export const createTracker = <T>(reactiveFn: IReactiveFn<T>): Accessor<T> => {
   if (mode.auto)
     return createMemo(() => reactiveFn());
   const [output, setOutput] = createSignal<T>();

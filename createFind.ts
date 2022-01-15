@@ -25,8 +25,8 @@ const checkCursor = <T>(cursor: Mongo.Cursor<T> | undefined | null | {_mongo: un
 
 export type FindFactory<T> = () => (Mongo.Cursor<T> | undefined | null);
 export type CreateFindOptions = {
-  noStore: boolean;
-  separate: boolean;
+  noStore?: boolean;
+  separate?: boolean;
 };
 
 const storify = <T>(document: Store<T>): Store<T> => createStore(document)[0];
