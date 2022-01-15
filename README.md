@@ -123,8 +123,17 @@ These helpers are modeled after `useTracker`, `useSubscribe`, and `useFind` from
 
 ### `createSubscribe(name, ...args)`
 
-```js
+```ts
 import {createSubscribe} from 'solid-meteor-data/createSubscribe';
+
+function createSubscribe(subscription:
+  Meteor.SubscriptionHandle | (() => Meteor.SubscriptionHandle)
+): (() => boolean);
+function createSubscribe(
+  name: string | (() => string),
+  arg1?: any | (() => any),
+  arg2?: any | (() => any), ...
+): (() => boolean);
 ```
 
 Calling `createSubscribe(name, ...args)` subscribes to the publication with
@@ -192,8 +201,16 @@ return (
 
 ### `createFind(reactiveFn)`
 
-```js
+```ts
 import {createFind} from 'solid-meteor-data/createFind';
+
+function createFind<T extends object>(
+  factory: () => (Mongo.Cursor<T> | undefined | null),
+  options?: {
+    noStore?: boolean;
+    separate?: boolean;
+  }
+): () => Store<T>[];
 ```
 
 Given a function `reactiveFn` that returns a Mongo cursor (typically, the
@@ -263,8 +280,12 @@ const docs = createFind(() => props.skip ? null : Docs.find());
 
 ### `createFindOne(reactiveFn)`
 
-```js
+```ts
 import {createFindOne} from 'solid-meteor-data/createFindOne';
+
+function createFindOne<T extends object>(
+  factory: () => T | undefined | null
+): [() => boolean, Store<T | {}>];
 ```
 
 Given a function `reactiveFn` that returns an object or `undefined`/`null`
@@ -304,8 +325,12 @@ return (
 
 ### `createTracker(reactiveFn)` [manual mode]
 
-```js
+```ts
 import {createTracker} from 'solid-meteor-data/createTracker';
+
+function createTracker<T>(
+  reactiveFn: (c?: Tracker.Computation) => T
+): () => T;
 ```
 
 Calling `createTracker(reactiveFn)` will immediately set up a
