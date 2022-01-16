@@ -4,6 +4,7 @@ import {ReactiveVar} from 'meteor/reactive-var';
 
 import {Mongo} from 'meteor/mongo';  // actually ./mockMongo
 import {createFindOne} from '../createFindOne';
+import {createFindOne as createFindOne2} from '..';
 
 const tick = () => new Promise((done) => setTimeout(done, 0));
 
@@ -19,6 +20,10 @@ const user2 = () => ({
 });
 
 describe('createFindOne', () => {
+  test('both imports work', () => {
+    expect(createFindOne).toBe(createFindOne2);
+  });
+
   test('exists false if undefined', () => {
     createRoot(dispose => {
       const [exists, user] = createFindOne(() => undefined);

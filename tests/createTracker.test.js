@@ -3,11 +3,15 @@ import {ReactiveVar} from 'meteor/reactive-var';
 import {jest} from '@jest/globals';
 
 import {createTracker} from '../createTracker';
-//import {createFind, createSubscribe, createTracker} from '..';
+import {createTracker as createTracker2} from '..';
 
 const tick = () => new Promise((done) => setTimeout(done, 0));
 
 describe('createTracker', () => {
+  test('both imports work', () => {
+    expect(createTracker).toBe(createTracker2);
+  });
+
   test('returns returned value', () => {
     createRoot(dispose => {
       const tracker = createTracker(() => 7);

@@ -3,6 +3,7 @@ import {jest} from '@jest/globals';
 
 import {Mongo} from 'meteor/mongo';  // actually ./mockMongo
 import {createFind} from '../createFind';
+import {createFind as createFind2} from '..';
 
 const docs = () => [
   {_id: 101, name: 'Me', friends: ['Myself', 'I']},
@@ -19,6 +20,10 @@ const makeCursor = (init) => {
 };
 
 describe('createFind', () => {
+  test('both imports work', () => {
+    expect(createFind).toBe(createFind2);
+  });
+
   test('noStore returns fetch results, identically', () => {
     createRoot(dispose => {
       const instance = docs();

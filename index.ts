@@ -1,4 +1,5 @@
 export {autoTracker} from './autoTracker'
 export {createFind} from './createFind'
+export {createFindOne} from './createFindOne'
 export {createSubscribe} from './createSubscribe'
 export {createTracker} from './createTracker'
