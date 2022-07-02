@@ -1,6 +1,7 @@
 # solid-meteor-data
 
-This package provides helper functions for combining the reactive systems in
+This package provides primitives (helper functions)
+for combining the reactive systems in
 [SolidJS](https://www.solidjs.com) and [Meteor](https://www.meteor.com),
 in particular to make it easy to build reactive user interfaces with SolidJS
 while getting data from Meteor.
@@ -9,7 +10,7 @@ A [demo repository](https://github.com/edemaine/solid-meteor-demo)
 illustrates the use of this library in a Meteor project.
 Related, the [`edemaine:solid` plugin](https://github.com/edemaine/meteor-solid)
 enables the SolidJS JSX compiler in Meteor, and
-[`edemaine:solid-meteor-helper`](https://github.com/edemaine/meteor-solid-template-helper/tree/main)
+[`edemaine:solid-meteor-template-helper`](https://github.com/edemaine/meteor-solid-template-helper/tree/main)
 enables use of SolidJS components within [Blaze](http://blazejs.org/) templates
 (e.g. for gradual transitions from Blaze).
 
@@ -93,9 +94,9 @@ return (
 );
 ```
 
-## Helper Functions
+## Primitives
 
-`solid-meteor-data` provides four different helper functions
+`solid-meteor-data` provides four different primitives
 (the SolidJS analog of React hooks) for using different types of
 Meteor reactive data within your SolidJS components/roots:
 
@@ -121,7 +122,7 @@ Meteor reactive data within your SolidJS components/roots:
    The code reacts to both SolidJS and Meteor dependencies.
    In auto mode, `createMemo` is equivalent to `createTracker`.
 
-These helpers are modeled after `useTracker`, `useSubscribe`, and `useFind` from
+These primitives are modeled after `useTracker`, `useSubscribe`, and `useFind` hooks from
 [`react-meteor-data`](https://github.com/meteor/react-packages/tree/master/packages/react-meteor-data).
 
 ### `createSubscribe(name, ...args)`
@@ -294,7 +295,7 @@ function createFindOne<T extends object>(
 Given a function `reactiveFn` that returns an object or `undefined`/`null`
 (typically, the result of a `findOne()` operation on a
 [Meteor Mongo Collection](https://docs.meteor.com/api/collections.html),
-or a related helper like
+or a related helper function like
 [`Meteor.user()`](https://docs.meteor.com/api/accounts.html)),
 `createFindOne(reactiveFn)` returns a pair `[exists, document]`
 where
