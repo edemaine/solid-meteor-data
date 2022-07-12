@@ -1,8 +1,9 @@
 import {createEffect, createRoot, createSignal} from 'solid-js';
 import {ReactiveVar} from 'meteor/reactive-var';
+import {Tracker} from 'meteor/tracker';
 import {jest} from '@jest/globals';
 
-import {createTracker} from '../createTracker';
+import {mode, createTracker} from '../createTracker';
 import {createTracker as createTracker2} from '..';
 
 const tick = () => new Promise((done) => setTimeout(done, 0));
@@ -161,5 +162,39 @@ describe('createTracker', () => {
     expect(tracker()).toEqual(5);
     expect(trackerUpdate).toHaveBeenCalledTimes(3);
     dispose();
+  });
+
+  test('stops Tracker when disposed', () => {
+    let stopped = 0;
+    const dispose = createRoot(dispose => {
+      createTracker((c) => {
+        if (!mode.auto) expect(c).toBe(Tracker.currentComputation);
+        Tracker.currentComputation.onStop(() => stopped++);
+      });
+      return dispose;
+    });
+    expect(stopped).toBe(0);
+    dispose();
+    expect(stopped).toBe(1);
+  });
+
+  test('stops Tracker when Solid signals update', () => {
+    let stopped = 0;
+    const {dispose, setSignal} = createRoot(dispose => {
+      const [signal, setSignal] = createSignal(0);
+      createTracker((c) => {
+        if (!mode.auto) expect(c).toBe(Tracker.currentComputation);
+        Tracker.currentComputation.onStop(() => stopped++);
+        return signal();
+      });
+      return {dispose, setSignal};
+    });
+    expect(stopped).toBe(0);
+    setSignal(1);
+    expect(stopped).toBe(1);
+    setSignal(2);
+    expect(stopped).toBe(2);
+    dispose();
+    expect(stopped).toBe(3);
   });
 });
