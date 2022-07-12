@@ -1,7 +1,7 @@
 {
   "name": "solid-meteor-data",
   "description": "Tools for combining SolidJS and Meteor reactivity",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "main": "index.js",
   "type": "module",
   "scripts": {
