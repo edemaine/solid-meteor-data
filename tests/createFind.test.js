@@ -100,6 +100,7 @@ describe('createFind', () => {
     expect(name).toHaveBeenCalledTimes(1);
     expect(friends).toHaveBeenCalledTimes(1);
     cursor.callbacks.changedAt(docs()[2], docs()[1], 1);
+    await tick();
     expect(name).toHaveBeenCalledTimes(2);
     expect(friends).toHaveBeenCalledTimes(1);
     dispose();

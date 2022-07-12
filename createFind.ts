@@ -87,7 +87,12 @@ const createFindClient = <T extends object>(factory: FindFactory<T>, options?: C
       }
       if (newDocuments.length || documents.length)  // avoid if already empty
         setOutput(documents = newDocuments);
-      // Observe further changes to cursor via live query
+      // Observe further changes to cursor via live query.
+      // All updates are wrapped in `schedule` in order to bulk-update the
+      // signal all at once, in case `observe` gives us several updates at
+      // once (which is common when a batch update comes from the server,
+      // e.g. at initial subscription).  Thus `documents`' indices may be
+      // out-of-date, but will be up-to-date when `schedule` runs update.
       observer = cursor.observe({
         addedAt(document: Store<T>, atIndex) {
           if (useStore) document = storify<T>(document);
@@ -98,7 +103,7 @@ const createFindClient = <T extends object>(factory: FindFactory<T>, options?: C
           if (useStore)
             // Only change changed fields in existing document.  Simulate
             // setStore which unwraps old document and passes it to reconcile.
-            reconcile(newDocument)(unwrap(documents[atIndex]));
+            schedule(() => reconcile(newDocument)(unwrap(documents[atIndex])));
           else
             schedule(() => documents[atIndex] = newDocument);
         },
