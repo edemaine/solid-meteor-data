@@ -8,6 +8,9 @@ while getting data from Meteor.
 
 A [demo repository](https://github.com/edemaine/solid-meteor-demo)
 illustrates the use of this library in a Meteor project.
+If you're coming from Blaze, you might also check out
+[this example of porting Blaze to SolidJS](https://forums.meteor.com/t/meteor-solidjs-demo/57242/9)
+using `solid-meteor-data`.
 Related, the [`edemaine:solid` plugin](https://github.com/edemaine/meteor-solid)
 enables the SolidJS JSX compiler in Meteor, and
 [`edemaine:solid-meteor-template-helper`](https://github.com/edemaine/meteor-solid-template-helper/tree/main)
