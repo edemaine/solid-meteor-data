@@ -29,13 +29,13 @@ find the types), it can only be run within a Meteor project (as it depends on
 To install the package, use NPM:
 
 ```sh
-meteor npm install solid-meteor-data
+npm install solid-meteor-data
 ```
 
 You'll also need to install `solid-js` if you haven't already:
 
 ```sh
-meteor npm install solid-js
+npm install solid-js
 ```
 
 ## Usage
